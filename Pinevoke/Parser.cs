@@ -40,7 +40,7 @@ namespace Pinevoke {
 
 			LS.Keywords = new Dictionary<string, int>();
 			string[] KeywordNames = Enum.GetNames(typeof(Keyword));
-			for (int i = 0; i < KeywordNames.Length; i++) 
+			for (int i = 0; i < KeywordNames.Length; i++)
 				LS.Keywords.Add(KeywordNames[i].ToLower(), (int)(Keyword)Enum.Parse(typeof(Keyword), KeywordNames[i]));
 
 			LS.Keywords.Add("public:", (int)Keyword._Public);
@@ -53,12 +53,13 @@ namespace Pinevoke {
 			LS.Symbols.Add("&", (int)Symbols.Ref);
 		}
 
-		public void Parse(string CppFunc) {
-			Console.WriteLine(CppFunc);
+		public void Parse(string Mangled, string Unmangled) {
+			Console.WriteLine("{0} => {1}", Mangled, Unmangled);
 
-			Token[] Tokens = new Lexer(CppFunc, LB, LS).ToArray();
+			Token[] Tokens = new Lexer(Unmangled, LB, LS).ToArray();
 			for (int i = 0; i < Tokens.Length; i++)
 				Console.WriteLine(Tokens[i]);
+			Console.WriteLine();
 		}
 	}
 }

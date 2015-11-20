@@ -37,12 +37,16 @@ namespace Pinevoke {
 			fixed (byte* NamePtr = Symbol.Name)
 				Name = Marshal.PtrToStringAnsi(new IntPtr(NamePtr));
 
-			if ((Symbol.Flags & 0x200) != 0)
+			if ((Symbol.Flags & 0x200) != 0) {
 				ExportedSymbols.Add(Name);
+				Console.WriteLine(Name);
+			}
 			return true;
 		}
 
 		static string[] GetExports(string Dll) {
+			Console.WriteLine("Enumerating exports for " + Dll);
+
 			if (!File.Exists(Dll))
 				throw new FileNotFoundException("File not found", Dll);
 
@@ -67,15 +71,11 @@ namespace Pinevoke {
 
 		static void Generate(string DllPath) {
 			string[] Exports = GetExports(DllPath);
+			Console.WriteLine();
 
 			Parser P = new Parser();
-			for (int i = 0; i < Exports.Length; i++) {
-				string Mangled = Exports[i];
-				string Unmangled = Demangle(Mangled);
-
-				Console.WriteLine(Mangled);
-				P.Parse(Unmangled);
-			}
+			for (int i = 0; i < Exports.Length; i++)
+				P.Parse(Exports[i], Demangle(Exports[i]));
 		}
 	}
 }
