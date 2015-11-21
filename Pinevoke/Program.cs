@@ -71,10 +71,11 @@ namespace Pinevoke {
 			string[] Exports = GetExports(DllPath);
 			Console.WriteLine();
 
-			Parser P = new Parser(DllPath);
+			Generator Gen = new Generator(DllPath);
+			Parser P = new Parser();
 			for (int i = 0; i < Exports.Length; i++)
-				P.Parse(Exports[i], Demangle(Exports[i]));
-			File.WriteAllText("Test.cs", P.Finalize());
+				P.Parse(Exports[i], Demangle(Exports[i]), Gen);
+			File.WriteAllText("Test.cs", Gen.Finalize());
 		}
 	}
 }
