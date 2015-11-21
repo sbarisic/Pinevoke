@@ -940,10 +940,11 @@ namespace System.Text {
 		}
 
 		public override string ToString() {
-			string TokenString = string.Format("({0}){1}", Id, Type);
+			/*string TokenString = string.Format("({0}){1}", Id, Type);
 			TokenString += new string(' ', 17 - TokenString.Length) + string.Format("`{0}´", Text);
 			TokenString += new string(' ', 50 - TokenString.Length) + Value.GetType().Name;
-			return TokenString;
+			return TokenString;*/
+			return Text;
 		}
 	}
 

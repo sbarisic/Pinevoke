@@ -37,10 +37,8 @@ namespace Pinevoke {
 			fixed (byte* NamePtr = Symbol.Name)
 				Name = Marshal.PtrToStringAnsi(new IntPtr(NamePtr));
 
-			if ((Symbol.Flags & 0x200) != 0) {
+			if ((Symbol.Flags & 0x200) != 0)
 				ExportedSymbols.Add(Name);
-				Console.WriteLine(Name);
-			}
 			return true;
 		}
 
@@ -73,9 +71,10 @@ namespace Pinevoke {
 			string[] Exports = GetExports(DllPath);
 			Console.WriteLine();
 
-			Parser P = new Parser();
+			Parser P = new Parser(DllPath);
 			for (int i = 0; i < Exports.Length; i++)
 				P.Parse(Exports[i], Demangle(Exports[i]));
+			File.WriteAllText("Test.cs", P.Finalize());
 		}
 	}
 }
