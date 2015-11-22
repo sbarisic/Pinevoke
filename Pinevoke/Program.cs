@@ -28,6 +28,7 @@ namespace Pinevoke {
 			else
 				Console.WriteLine("Usage:\n\tpinevoke.exe some.dll");
 
+			Console.WriteLine("Done!");
 			Dbghelp.SymCleanup(CurProcess);
 			Console.ReadLine();
 		}
@@ -71,7 +72,7 @@ namespace Pinevoke {
 			string[] Exports = GetExports(DllPath);
 			Console.WriteLine();
 
-			Generator Gen = new Generator(DllPath);
+			Generator Gen = new Generator(DllPath, CharSet.Ansi);
 			Parser P = new Parser();
 			for (int i = 0; i < Exports.Length; i++)
 				P.Parse(Exports[i], Demangle(Exports[i]), Gen);

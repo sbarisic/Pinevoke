@@ -20,17 +20,29 @@ namespace Pinevoke {
 		}
 
 		public static string ConvertType(string CppType) {
+			// Constructors and destructors
+			if (CppType == "void" || CppType.Length == 0)
+				return "void";
+
 			if (CppType == "char *")
 				return "string";
 			if (CppType.Contains('*'))
 				return "IntPtr";
-			return CppType;
+
+			if (CppType == "unsigned int")
+				return "uint";
+
+			if (CppType == "int")
+				return CppType;
+			throw new Exception("Unknown type " + CppType);
 		}
 
 		public static CallingConvention ConvertCConv(string CConv) {
 			switch (CConv) {
 				case "__cdecl":
 					return CallingConvention.Cdecl;
+				case "__thiscall":
+					return CallingConvention.ThisCall;
 				default:
 					throw new NotImplementedException();
 			}

@@ -10,10 +10,13 @@ namespace CsTest {
 		static void Main(string[] args) {
 			Console.Title = "C# Test";
 
-			int i = 2;
-			Console.WriteLine("Add: {0}", CppTest.Add(40, new IntPtr(&i)));
-			CppTest.SomeString = "Hello World!";
-			Console.WriteLine(CppTest.GetSomeString());
+			CppTest.SomeString = "dcfgvbhj";
+			Console.WriteLine("Some String: {0}", CppTest.GetSomeString());
+
+			CppTest.TestClass Test = new CppTest.TestClass();
+			Test.SetTitle("SomeTitle");
+			Test.PrintTitle();
+			Console.WriteLine("Title: {0}", Test.GetTitle());
 
 			Console.WriteLine("Done!");
 			Console.ReadLine();

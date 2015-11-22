@@ -16,6 +16,8 @@ namespace Pinevoke {
 		LParen,
 		RParen,
 		Comma,
+		NamespaceSeparator,
+		Destructor,
 	}
 
 	static class Extensions {
@@ -58,8 +60,12 @@ namespace Pinevoke {
 			LS.Keywords.Add("double", (int)ID.Type);
 
 			LS.Keywords.Add("__cdecl", (int)ID.CallingConvention);
+			LS.Keywords.Add("__stdcall", (int)ID.CallingConvention);
+			LS.Keywords.Add("__fastcall", (int)ID.CallingConvention);
+			LS.Keywords.Add("__thiscall", (int)ID.CallingConvention);
+			LS.Keywords.Add("__vectorcall", (int)ID.CallingConvention);
 
-			LS.Keywords.Add("public:", (int)ID.Invalid);
+			LS.Keywords.Add("public", (int)ID.Invalid);
 			LS.Keywords.Add("const", (int)ID.Invalid);
 
 			LS.Symbols = new Dictionary<string, int>();
@@ -68,14 +74,51 @@ namespace Pinevoke {
 			LS.Symbols.Add("(", (int)ID.LParen);
 			LS.Symbols.Add(")", (int)ID.RParen);
 			LS.Symbols.Add(",", (int)ID.Comma);
+			LS.Symbols.Add("~", (int)ID.Destructor);
+			LS.Symbols.Add("::", (int)ID.NamespaceSeparator);
+
+			LS.Symbols.Add(":", (int)ID.Invalid);
 		}
 
 		public void Parse(string Mangled, string Unmangled, Generator Gen) {
-			Console.WriteLine("{0} => {1}", Mangled, Unmangled);
+			if (Unmangled.Contains("::operator=") || Unmangled.Contains("__autoclassinit"))
+				return;
 
+			Console.WriteLine("{0}\n{1}\n", Mangled, Unmangled);
 			Token[] Tokens = ToTokens(Unmangled);
 
-			if (Unmangled.EndsWith(")")) { // Function
+			if (Unmangled.StartsWith("public:")) { // Class member
+				bool IsStatic = Tokens[0].Text == "static";
+				if (IsStatic)
+					Tokens = Tokens.Sub(1, Tokens.Length - 1);
+
+				int ReturnTypeLen = 0;
+				int NameIdx = 0;
+				int ClassNameIdx = 0;
+				bool Destructor = false;
+
+				for (int i = 0; i < Tokens.Length; i++) {
+					if (Tokens[i].IsID(ID.CallingConvention))
+						ReturnTypeLen = i;
+					if (Tokens[i].IsID(ID.NamespaceSeparator))
+						ClassNameIdx = i - 1;
+					if (Tokens[i].IsID(ID.LParen))
+						NameIdx = i - 1;
+					if (Tokens[i].IsID(ID.Destructor))
+						Destructor = true;
+				}
+
+				string ReturnType = Types.ConvertType(string.Join(" ", (IEnumerable<Token>)Tokens.Sub(0, ReturnTypeLen)));
+				string CConv = Tokens[ReturnTypeLen].Text;
+				string ClassName = Tokens[ClassNameIdx].Text;
+				string Name = Tokens[NameIdx].Text;
+				if (Name == ClassName && !Destructor)
+					Name = Function.Constructor;
+				else if (Destructor)
+					Name = Function.Destructor;
+				string[] ParamTypes = GetParams(Unmangled);
+				Gen.Add(ClassName, new Function(Mangled, Name, ReturnType, ParamTypes, Types.ConvertCConv(CConv)));
+			} else if (Unmangled.EndsWith(")")) { // Function
 				int ReturnTypeLen = 0;
 				int NameIdx = 0;
 
@@ -93,12 +136,13 @@ namespace Pinevoke {
 				string Name = Tokens[NameIdx].Text;
 				string[] ParamTypes = GetParams(Unmangled);
 
-				Gen.GenerateDllImport(Mangled, Name, ReturnType, ParamTypes, Types.ConvertCConv(CConv));
+				Gen.Add(new Function(Mangled, Name, ReturnType, ParamTypes, Types.ConvertCConv(CConv)));
 
 			} else { // Something else
 				string VariableType = Types.ConvertType(string.Join(" ", (IEnumerable<Token>)Tokens.Sub(0, Tokens.Length - 1)));
 				string Name = Tokens[Tokens.Length - 1].Text;
-				Gen.GenerateVarImport(Mangled, Name, VariableType);
+
+				Gen.Add(new Variable(Mangled, Name, VariableType));
 			}
 		}
 
