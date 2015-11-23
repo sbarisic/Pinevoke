@@ -18,6 +18,8 @@ namespace Pinevoke {
 		Comma,
 		NamespaceSeparator,
 		Destructor,
+		Class,
+		Struct,
 	}
 
 	static class Extensions {
@@ -42,8 +44,8 @@ namespace Pinevoke {
 	}
 
 	class Parser {
-		LexerBehavior LB;
-		LexerSettings LS;
+		static LexerBehavior LB;
+		static LexerSettings LS;
 
 		public Parser() {
 			LB = LexerBehavior.SkipComments | LexerBehavior.SkipWhiteSpaces | LexerBehavior.Default;
@@ -64,6 +66,9 @@ namespace Pinevoke {
 			LS.Keywords.Add("__fastcall", (int)ID.CallingConvention);
 			LS.Keywords.Add("__thiscall", (int)ID.CallingConvention);
 			LS.Keywords.Add("__vectorcall", (int)ID.CallingConvention);
+
+			LS.Keywords.Add("class", (int)ID.Class);
+			LS.Keywords.Add("struct", (int)ID.Struct);
 
 			LS.Keywords.Add("public", (int)ID.Invalid);
 			LS.Keywords.Add("const", (int)ID.Invalid);
@@ -116,8 +121,9 @@ namespace Pinevoke {
 					Name = Function.Constructor;
 				else if (Destructor)
 					Name = Function.Destructor;
-				string[] ParamTypes = GetParams(Unmangled);
-				Gen.Add(ClassName, new Function(Mangled, Name, ReturnType, ParamTypes, Types.ConvertCConv(CConv)));
+				string[] OriginalParamTypes;
+				string[] ParamTypes = GetParams(Unmangled, out OriginalParamTypes);
+				Gen.Add(ClassName, new Function(Mangled, Name, ReturnType, ParamTypes, OriginalParamTypes, Types.ConvertCConv(CConv)));
 			} else if (Unmangled.EndsWith(")")) { // Function
 				int ReturnTypeLen = 0;
 				int NameIdx = 0;
@@ -134,9 +140,10 @@ namespace Pinevoke {
 				string ReturnType = Types.ConvertType(string.Join(" ", (IEnumerable<Token>)Tokens.Sub(0, ReturnTypeLen)));
 				string CConv = Tokens[ReturnTypeLen].Text;
 				string Name = Tokens[NameIdx].Text;
-				string[] ParamTypes = GetParams(Unmangled);
+				string[] OriginalParamTypes;
+				string[] ParamTypes = GetParams(Unmangled, out OriginalParamTypes);
 
-				Gen.Add(new Function(Mangled, Name, ReturnType, ParamTypes, Types.ConvertCConv(CConv)));
+				Gen.Add(new Function(Mangled, Name, ReturnType, ParamTypes, OriginalParamTypes, Types.ConvertCConv(CConv)));
 
 			} else { // Something else
 				string VariableType = Types.ConvertType(string.Join(" ", (IEnumerable<Token>)Tokens.Sub(0, Tokens.Length - 1)));
@@ -146,7 +153,7 @@ namespace Pinevoke {
 			}
 		}
 
-		Token[] ToTokens(string Txt) {
+		public static Token[] ToTokens(string Txt) {
 			List<Token> Tokens = new List<Token>();
 			Token[] RawTokens = new Lexer(Txt, LB, LS).ToArray();
 			for (int i = 0; i < RawTokens.Length; i++)
@@ -159,12 +166,17 @@ namespace Pinevoke {
 			return ToTokens(Unmangled.Substring(0, Unmangled.IndexOf('(')));
 		}
 
-		string[] GetParams(string Unmangled) {
+		string[] GetParams(string Unmangled, out string[] Original) {
 			int FirstLParen = Unmangled.IndexOf('(');
 			string[] ParamTypes = Unmangled.Substring(FirstLParen + 1, Unmangled.IndexOf(')') - FirstLParen - 1).Split(',');
 			List<string> Params = new List<string>();
-			for (int i = 0; i < ParamTypes.Length; i++)
-				Params.Add(Types.ConvertType(string.Join(" ", (IEnumerable<Token>)ToTokens(ParamTypes[i]))));
+			List<string> OriginalParams = new List<string>();
+			for (int i = 0; i < ParamTypes.Length; i++) {
+				string TypeName = string.Join(" ", (IEnumerable<Token>)ToTokens(ParamTypes[i]));
+				Params.Add(Types.ConvertType(TypeName));
+				OriginalParams.Add(TypeName);
+			}
+			Original = OriginalParams.ToArray();
 			return Params.ToArray();
 		}
 	}

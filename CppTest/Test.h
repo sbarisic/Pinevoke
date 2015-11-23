@@ -1,24 +1,23 @@
 #pragma once
 
-class EXPORT TestClass {
+class EXPORT Animal {
 public:
-	static int SizeOf() { return sizeof(TestClass); }
-	// ^ Requirement, because nobody thought of actually
-	// embedding the god damn class size in some metadata/whatever in the dll
+	static int SizeOf() { return sizeof(Animal); }
+	Animal();
 
-	const char* Title;
-	int I;
+	const char* Name;
 
-	TestClass();
-	~TestClass();
+	void SetName(const char* Name);
+	const char* GetName();
+};
 
-	void SetTitle(const char* Title);
-	const char* GetTitle();
-	void PrintTitle();
+class EXPORT Farmer {
+public:
+	static int SizeOf() { return sizeof(Farmer); }
+	Farmer();
 
-	void SetInt(int I);
-	int GetInt();
-	void PrintInt();
+	void SayAnimalName(Animal& A);
+	//void SayAnimalName(Animal* A);
 };
 
 EXPORT const char* SomeString;

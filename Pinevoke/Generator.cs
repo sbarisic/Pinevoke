@@ -21,27 +21,43 @@ namespace Pinevoke {
 		public string OriginalName;
 		public string Name;
 		public string ReturnType;
-		public string[] ParamTypes;
+		public string[] ParamTypes, OriginalParamTypes;
 		public CallingConvention CConv;
 		public bool SetLastError;
 		public string Modifiers;
 		public bool FwdToNative;
 		public string ClassName;
+		public bool IsClassWrapper;
 
-		public Function(string OriginalName, string Name, string ReturnType, string[] ParamTypes,
+		public Function(string OriginalName, string Name, string ReturnType, string[] ParamTypes, string[] OriginalParamTypes,
 			CallingConvention CConv = CallingConvention.Cdecl, bool SetLastError = true, string Modifiers = "static extern") {
 			this.OriginalName = OriginalName;
 			this.Name = Name;
 			this.ReturnType = ReturnType;
-			this.ParamTypes = ParamTypes;
+
+			List<string> PTypes = new List<string>();
+			List<string> OPTypes = new List<string>();
+			for (int i = 0; i < ParamTypes.Length; i++)
+				if (ParamTypes[i] != "void") {
+					PTypes.Add(ParamTypes[i]);
+					OPTypes.Add(OriginalParamTypes[i]);
+				}
+			this.ParamTypes = PTypes.ToArray();
+			this.OriginalParamTypes = OPTypes.ToArray();
+
 			this.CConv = CConv;
 			this.SetLastError = SetLastError;
 			this.Modifiers = Modifiers;
 		}
 
+		public Function(string Name, string ReturnType, string[] ParamTypes, string[] OriginalParamTypes,
+			CallingConvention CConv = CallingConvention.Cdecl, bool SetLastError = true)
+			: this(Name, Name, ReturnType, ParamTypes, OriginalParamTypes, CConv, SetLastError) {
+		}
+
 		public Function(string Name, string ReturnType, string[] ParamTypes,
 			CallingConvention CConv = CallingConvention.Cdecl, bool SetLastError = true)
-			: this(Name, Name, ReturnType, ParamTypes, CConv, SetLastError) {
+			: this(Name, Name, ReturnType, ParamTypes, ParamTypes, CConv, SetLastError) {
 		}
 
 		public override string Generate() {
@@ -66,41 +82,64 @@ namespace Pinevoke {
 				Mods += " " + Modifiers;
 
 			List<string> Params = new List<string>();
-			int ParamCount = 0;
+
 			if (!FwdToNative && CConv == CallingConvention.ThisCall)
 				Params.Add("IntPtr " + This);
-			for (int i = 0; i < ParamTypes.Length; i++)
-				if (ParamTypes[i] != "void") {
-					ParamCount++;
-					Params.Add(ParamTypes[i] + " " + ((char)('A' + i)));
-				}
+			for (int i = 0; i < ParamTypes.Length; i++) {
+				string ParamType = ParamTypes[i];
+				if (!FwdToNative)
+					ParamType = Types.ConvertType(OriginalParamTypes[i], true);
+
+				string PInvokeParamName = ParamType + " " + ((char)('A' + i));
+				if (IsClassWrapper)
+					PInvokeParamName = Types.CustomMarshal(ClassName, ParamType, false, PInvokeParamName);
+				Params.Add(PInvokeParamName);
+			}
 
 			if (FwdToNative && Name == Constructor)
 				SB.AppendFormat("public {0}()", ClassName);
 			else if (FwdToNative && Name == Destructor)
 				SB.AppendFormat("~{0}()", ClassName);
-			else
+			else {
+				string CustomMarshal = Types.CustomMarshal(ClassName, ReturnType, true, "");
+				if (IsClassWrapper && CustomMarshal.Length > 0)
+					SB.AppendFormat("{0}\n", CustomMarshal);
 				SB.AppendFormat("public{3} {0} {1}({2})", ReturnType, Name, string.Join(", ", Params), Mods);
+			}
 
 			if (FwdToNative) {
 				SB.Append(" {\n\t");
-				if (ReturnType != "void")
+				bool Returned = false;
+				if (ReturnType != "void") {
+					Returned = true;
 					SB.Append("return ");
+				}
 
 				string ThisPtr = "";
 				if (!Modifiers.Contains("static")) {
 					ThisPtr = This;
-					if (ParamCount > 0)
+					if (ParamTypes.Length > 0)
 						ThisPtr += ", ";
 				}
-
+				
 				Params.Clear();
-				for (int i = 0; i < ParamCount; i++)
-					Params.Add(((char)('A' + i)).ToString());
+				for (int i = 0; i < ParamTypes.Length; i++) {
+					string ParamName = ((char)('A' + i)).ToString();
+					Params.Add(Types.WrapType(OriginalParamTypes[i], ParamTypes[i], ParamName));
+					//Params.Add(ParamName);
+				}
 
 				if (Name == Constructor)
 					SB.AppendFormat("{0} = Marshal.AllocHGlobal(Native.SizeOf());\n\t", This);
-				SB.AppendFormat("Native.{0}({1}{2});\n", Name, ThisPtr, string.Join(", ", Params));
+
+				if (Returned) {
+					//SB.Append(Types.WrapType(ReturnType, ""));
+					SB.Append("(");
+				}
+				SB.AppendFormat("Native.{0}({1}{2})", Name, ThisPtr, string.Join(", ", Params));
+				if (Returned)
+					SB.Append(")");
+				SB.Append(";\n");
 				if (Name == Destructor)
 					SB.AppendFormat("\tMarshal.FreeHGlobal({0});\n", This);
 				SB.Append("}");
@@ -153,15 +192,19 @@ namespace Pinevoke {
 			SB.AppendFormat("public class {0} {{\n", Name);
 			SB.AppendFormat("\tconst CharSet __CSet = CharSet.{0};\n", CSet);
 			SB.AppendLine("\tstatic class Native {");
-			for (int i = 0; i < Functions.Count; i++)
+			for (int i = 0; i < Functions.Count; i++) {
+				Functions[i].IsClassWrapper = true;
+				Functions[i].ClassName = Name;
 				SB.AppendLine(Functions[i].Generate());
+				Functions[i].IsClassWrapper = false;
+			}
 			SB.AppendLine("\t}");
 
 			SB.AppendFormat("\n\tIntPtr __this;\n", Name);
+			SB.AppendFormat("\tpublic static implicit operator IntPtr({0} A) {{ return A.__this; }}\n", Name);
 
 			for (int i = 0; i < Functions.Count; i++) {
 				Functions[i].FwdToNative = true;
-				Functions[i].ClassName = Name;
 				SB.AppendLine(Functions[i].Generate());
 			}
 

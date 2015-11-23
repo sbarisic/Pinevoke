@@ -23,31 +23,43 @@ namespace Pinevoke {
 				{"char *", "string"},
 				{"wchar_t *", "string"},
 				{"float", "float"},
-				{"double", "double"}
+				{"double", "double"},
+
+				// --
+				{"_", "IntPtr"}
 			};
 		}
 
 		public static string ReadType(string Type, string InternalName) {
 			if (Type == "string")
-				return "return Marshal.PtrToStringAnsi(Marshal.ReadIntPtr(" + InternalName + "));";
+				return "return " + WrapType("IntPtr", "string", "Marshal.ReadIntPtr(" + InternalName + ")") + ";";
 			throw new NotImplementedException();
 		}
 
 		public static string WriteType(string Type, string InternalName) {
 			if (Type == "string")
-				return "Marshal.WriteIntPtr(" + InternalName + ", Marshal.StringToHGlobalAnsi(value));";
+				return "Marshal.WriteIntPtr(" + InternalName + ", " + WrapType("string", "IntPtr", "value") + ");";
 			throw new NotImplementedException();
 		}
 
-		public static string ConvertType(string CppType) {
+		public static string ConvertType(string CppType, bool Internal = false) {
 			// Constructors and destructors
 			if (CppType == "void" || CppType.Length == 0)
 				return "void";
 
 			if (TypeConversion.ContainsKey(CppType))
 				return TypeConversion[CppType];
+			if (TypeConversion.ContainsValue(CppType))
+				return CppType;
+
 			if (CppType.Contains('*'))
 				return "IntPtr";
+			if (CppType.Contains('&')) {
+				if (Internal)
+					return "IntPtr";
+				return Parser.ToTokens(CppType)[1].Text;
+			}
+
 			throw new Exception("Unknown type " + CppType);
 		}
 
@@ -60,6 +72,34 @@ namespace Pinevoke {
 				default:
 					throw new NotImplementedException();
 			}
+		}
+
+		public static string WrapType(string FromType, string ToType, string ParamName) {
+			string Ret = ParamName;
+
+			if (FromType == "IntPtr" && ToType == "string")
+				Ret = "Marshal.PtrToStringAnsi";
+			if (FromType == "string" && ToType == "IntPtr")
+				Ret = "Marshal.StringToHGlobalAnsi";
+			if (FromType.Contains('&'))
+				Ret = "(IntPtr)";
+
+			if (Ret != ParamName && !string.IsNullOrEmpty(ParamName))
+				Ret += "(" + ParamName + ")";
+			return Ret;
+		}
+
+		public static string CustomMarshal(string ClassName, string TypeName, bool ReturnType, string Rest) {
+			string Ret = "";
+			string CustomMarshalFormat = "[";
+			if (ReturnType)
+				CustomMarshalFormat += "return: ";
+			CustomMarshalFormat += "MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof({0}_{1}_Marshal))]";
+
+			if (!string.IsNullOrEmpty(ClassName) && TypeName == "string")
+				Ret = string.Format(CustomMarshalFormat, ClassName, TypeName);
+
+			return Ret + Rest;
 		}
 	}
 }

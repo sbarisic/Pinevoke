@@ -29,58 +29,63 @@ public static partial class CppTest {
 	[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.Cdecl, EntryPoint = "?Add@@YAHHPAH@Z", SetLastError = true)]
 	public static extern int Add(int A, IntPtr B);
 
-	public class TestClass {
+	public class Animal {
 		const CharSet __CSet = CharSet.Ansi;
 		static class Native {
-			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?SetInt@TestClass@@QAEXH@Z", SetLastError = true)]
-			public static extern void SetInt(IntPtr __this, int A);
-			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.Cdecl, EntryPoint = "?SizeOf@TestClass@@SAHXZ", SetLastError = true)]
-			public static extern int SizeOf();
-			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?PrintTitle@TestClass@@QAEXXZ", SetLastError = true)]
-			public static extern void PrintTitle(IntPtr __this);
-			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?SetTitle@TestClass@@QAEXPBD@Z", SetLastError = true)]
-			public static extern void SetTitle(IntPtr __this, string A);
-			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?GetTitle@TestClass@@QAEPBDXZ", SetLastError = true)]
-			public static extern string GetTitle(IntPtr __this);
-			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "??1TestClass@@QAE@XZ", SetLastError = true)]
-			public static extern void __dtor(IntPtr __this);
-			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?PrintInt@TestClass@@QAEXXZ", SetLastError = true)]
-			public static extern void PrintInt(IntPtr __this);
-			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?GetInt@TestClass@@QAEHXZ", SetLastError = true)]
-			public static extern int GetInt(IntPtr __this);
-			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "??0TestClass@@QAE@XZ", SetLastError = true)]
+			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "??0Animal@@QAE@XZ", SetLastError = true)]
 			public static extern void __ctor(IntPtr __this);
+			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?GetName@Animal@@QAEPBDXZ", SetLastError = true)]
+			[return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Animal_string_Marshal))]
+			public static extern string GetName(IntPtr __this);
+			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.Cdecl, EntryPoint = "?SizeOf@Animal@@SAHXZ", SetLastError = true)]
+			public static extern int SizeOf();
+			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?SetName@Animal@@QAEXPBD@Z", SetLastError = true)]
+			public static extern void SetName(IntPtr __this, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Animal_string_Marshal))]string A);
 		}
 
 		IntPtr __this;
-		public void SetInt(int A) {
-			Native.SetInt(__this, A);
+		public static implicit operator IntPtr(Animal A) {
+			return A.__this;
 		}
-		public static int SizeOf() {
-			return Native.SizeOf();
-		}
-		public void PrintTitle() {
-			Native.PrintTitle(__this);
-		}
-		public void SetTitle(string A) {
-			Native.SetTitle(__this, A);
-		}
-		public string GetTitle() {
-			return Native.GetTitle(__this);
-		}
-		~TestClass() {
-			Native.__dtor(__this);
-			Marshal.FreeHGlobal(__this);
-		}
-		public void PrintInt() {
-			Native.PrintInt(__this);
-		}
-		public int GetInt() {
-			return Native.GetInt(__this);
-		}
-		public TestClass() {
+		public Animal() {
 			__this = Marshal.AllocHGlobal(Native.SizeOf());
 			Native.__ctor(__this);
+		}
+		public string GetName() {
+			return (Native.GetName(__this));
+		}
+		public static int SizeOf() {
+			return (Native.SizeOf());
+		}
+		public void SetName(string A) {
+			Native.SetName(__this, A);
+		}
+	}
+
+	public class Farmer {
+		const CharSet __CSet = CharSet.Ansi;
+		static class Native {
+			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "??0Farmer@@QAE@XZ", SetLastError = true)]
+			public static extern void __ctor(IntPtr __this);
+			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?SayAnimalName@Farmer@@QAEXAAVAnimal@@@Z", SetLastError = true)]
+			public static extern void SayAnimalName(IntPtr __this, IntPtr A);
+			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.Cdecl, EntryPoint = "?SizeOf@Farmer@@SAHXZ", SetLastError = true)]
+			public static extern int SizeOf();
+		}
+
+		IntPtr __this;
+		public static implicit operator IntPtr(Farmer A) {
+			return A.__this;
+		}
+		public Farmer() {
+			__this = Marshal.AllocHGlobal(Native.SizeOf());
+			Native.__ctor(__this);
+		}
+		public void SayAnimalName(Animal A) {
+			Native.SayAnimalName(__this, (IntPtr)(A));
+		}
+		public static int SizeOf() {
+			return (Native.SizeOf());
 		}
 	}
 

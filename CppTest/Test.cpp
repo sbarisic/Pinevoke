@@ -1,35 +1,27 @@
 #include "stdafx.h"
 #include "Test.h"
 
-TestClass::TestClass() {
+Animal::Animal() {
 }
 
-TestClass::~TestClass() {
+void Animal::SetName(const char* Name) {
+	this->Name = strcpy((char*)calloc(strlen(Name) + 1, sizeof(char)), Name);
 }
 
-void TestClass::SetTitle(const char* Title) {
-	this->Title = Title;
+const char* Animal::GetName() {
+	return this->Name;
 }
 
-const char* TestClass::GetTitle() {
-	return this->Title;
+Farmer::Farmer() {
 }
 
-void TestClass::PrintTitle() {
-	printf("Title: %s\n", this->Title);
+void Farmer::SayAnimalName(Animal& A) {
+	printf("Animal name is: %s\n", A.GetName());
 }
 
-void TestClass::SetInt(int I) {
-	this->I = I;
-}
-
-int TestClass::GetInt() {
-	return this->I;
-}
-
-void TestClass::PrintInt() {
-	printf("Int: %i\n", this->I);
-}
+/*void Farmer::SayAnimalName(Animal* A) {
+	printf("Animal name is: %s\n", A->GetName());
+}*/
 
 // ----
 
