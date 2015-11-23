@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
 
+using Animal_string_Marshal = StringMarshal;
+
 public static partial class kernel32 {
 	const string __DllName = "kernel32";
 	const CharSet __CSet = CharSet.Ansi;
@@ -65,10 +67,10 @@ public static partial class CppTest {
 	public class Farmer {
 		const CharSet __CSet = CharSet.Ansi;
 		static class Native {
+			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?SayAnimalName@Farmer@@QAEXPAVAnimal@@@Z", SetLastError = true)]
+			public static extern void SayAnimalName(IntPtr __this, IntPtr A);
 			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "??0Farmer@@QAE@XZ", SetLastError = true)]
 			public static extern void __ctor(IntPtr __this);
-			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?SayAnimalName@Farmer@@QAEXAAVAnimal@@@Z", SetLastError = true)]
-			public static extern void SayAnimalName(IntPtr __this, IntPtr A);
 			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.Cdecl, EntryPoint = "?SizeOf@Farmer@@SAHXZ", SetLastError = true)]
 			public static extern int SizeOf();
 		}
@@ -77,12 +79,12 @@ public static partial class CppTest {
 		public static implicit operator IntPtr(Farmer A) {
 			return A.__this;
 		}
+		public void SayAnimalName(Animal A) {
+			Native.SayAnimalName(__this, (IntPtr)(A));
+		}
 		public Farmer() {
 			__this = Marshal.AllocHGlobal(Native.SizeOf());
 			Native.__ctor(__this);
-		}
-		public void SayAnimalName(Animal A) {
-			Native.SayAnimalName(__this, (IntPtr)(A));
 		}
 		public static int SizeOf() {
 			return (Native.SizeOf());

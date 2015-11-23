@@ -52,9 +52,7 @@ namespace Pinevoke {
 			if (TypeConversion.ContainsValue(CppType))
 				return CppType;
 
-			if (CppType.Contains('*'))
-				return "IntPtr";
-			if (CppType.Contains('&')) {
+			if (CppType.Contains('*') || CppType.Contains('&')) {
 				if (Internal)
 					return "IntPtr";
 				return Parser.ToTokens(CppType)[1].Text;
@@ -81,7 +79,7 @@ namespace Pinevoke {
 				Ret = "Marshal.PtrToStringAnsi";
 			if (FromType == "string" && ToType == "IntPtr")
 				Ret = "Marshal.StringToHGlobalAnsi";
-			if (FromType.Contains('&'))
+			if ((FromType.Contains('&') || FromType.Contains('*')) && ToType != "string") 
 				Ret = "(IntPtr)";
 
 			if (Ret != ParamName && !string.IsNullOrEmpty(ParamName))

@@ -80,7 +80,7 @@ namespace Pinevoke {
 			string Mods = "";
 			if (Modifiers.Length > 0)
 				Mods += " " + Modifiers;
-
+			
 			List<string> Params = new List<string>();
 
 			if (!FwdToNative && CConv == CallingConvention.ThisCall)
@@ -189,7 +189,7 @@ namespace Pinevoke {
 
 		public override string Generate() {
 			StringBuilder SB = new StringBuilder();
-			SB.AppendFormat("public class {0} {{\n", Name);
+			SB.AppendFormat("public {0} {1} {{\n", "class", Name);
 			SB.AppendFormat("\tconst CharSet __CSet = CharSet.{0};\n", CSet);
 			SB.AppendLine("\tstatic class Native {");
 			for (int i = 0; i < Functions.Count; i++) {

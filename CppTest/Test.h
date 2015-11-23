@@ -16,8 +16,7 @@ public:
 	static int SizeOf() { return sizeof(Farmer); }
 	Farmer();
 
-	void SayAnimalName(Animal& A);
-	//void SayAnimalName(Animal* A);
+	void SayAnimalName(Animal* A);
 };
 
 EXPORT const char* SomeString;

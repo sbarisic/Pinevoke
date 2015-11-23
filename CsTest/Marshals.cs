@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-class Animal_string_Marshal : ICustomMarshaler {
+class StringMarshal : ICustomMarshaler {
 	public void CleanUpManagedData(object ManagedObj) {
 	}
 
@@ -21,10 +21,10 @@ class Animal_string_Marshal : ICustomMarshaler {
 		return Marshal.PtrToStringAnsi(NativeData);
 	}
 
-	internal static Animal_string_Marshal Singleton;
+	internal static StringMarshal Singleton;
 	public static ICustomMarshaler GetInstance(string Cookie) {
 		if (Singleton == null)
-			Singleton = new Animal_string_Marshal();
+			Singleton = new StringMarshal();
 		return Singleton;
 	}
 }

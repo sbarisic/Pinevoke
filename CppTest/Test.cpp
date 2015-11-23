@@ -15,13 +15,9 @@ const char* Animal::GetName() {
 Farmer::Farmer() {
 }
 
-void Farmer::SayAnimalName(Animal& A) {
-	printf("Animal name is: %s\n", A.GetName());
-}
-
-/*void Farmer::SayAnimalName(Animal* A) {
+void Farmer::SayAnimalName(Animal* A) {
 	printf("Animal name is: %s\n", A->GetName());
-}*/
+}
 
 // ----
 
