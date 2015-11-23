@@ -32,6 +32,8 @@ public static partial class CppTest {
 	public class TestClass {
 		const CharSet __CSet = CharSet.Ansi;
 		static class Native {
+			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?SetInt@TestClass@@QAEXH@Z", SetLastError = true)]
+			public static extern void SetInt(IntPtr __this, int A);
 			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.Cdecl, EntryPoint = "?SizeOf@TestClass@@SAHXZ", SetLastError = true)]
 			public static extern int SizeOf();
 			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?PrintTitle@TestClass@@QAEXXZ", SetLastError = true)]
@@ -42,11 +44,18 @@ public static partial class CppTest {
 			public static extern string GetTitle(IntPtr __this);
 			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "??1TestClass@@QAE@XZ", SetLastError = true)]
 			public static extern void __dtor(IntPtr __this);
+			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?PrintInt@TestClass@@QAEXXZ", SetLastError = true)]
+			public static extern void PrintInt(IntPtr __this);
+			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "?GetInt@TestClass@@QAEHXZ", SetLastError = true)]
+			public static extern int GetInt(IntPtr __this);
 			[DllImport(__DllName, CharSet = __CSet, CallingConvention = CallingConvention.ThisCall, EntryPoint = "??0TestClass@@QAE@XZ", SetLastError = true)]
 			public static extern void __ctor(IntPtr __this);
 		}
 
 		IntPtr __this;
+		public void SetInt(int A) {
+			Native.SetInt(__this, A);
+		}
 		public static int SizeOf() {
 			return Native.SizeOf();
 		}
@@ -62,6 +71,12 @@ public static partial class CppTest {
 		~TestClass() {
 			Native.__dtor(__this);
 			Marshal.FreeHGlobal(__this);
+		}
+		public void PrintInt() {
+			Native.PrintInt(__this);
+		}
+		public int GetInt() {
+			return Native.GetInt(__this);
 		}
 		public TestClass() {
 			__this = Marshal.AllocHGlobal(Native.SizeOf());

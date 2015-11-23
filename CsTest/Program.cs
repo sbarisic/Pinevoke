@@ -13,10 +13,11 @@ namespace CsTest {
 			CppTest.SomeString = "dcfgvbhj";
 			Console.WriteLine("Some String: {0}", CppTest.GetSomeString());
 
+
 			CppTest.TestClass Test = new CppTest.TestClass();
-			Test.SetTitle("SomeTitle");
-			Test.PrintTitle();
-			Console.WriteLine("Title: {0}", Test.GetTitle());
+			Test.SetInt(42);
+			Test.PrintInt();
+			Console.WriteLine("Int from C#: {0}", Test.GetInt());
 
 			Console.WriteLine("Done!");
 			Console.ReadLine();

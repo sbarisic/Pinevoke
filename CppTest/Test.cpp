@@ -19,6 +19,20 @@ void TestClass::PrintTitle() {
 	printf("Title: %s\n", this->Title);
 }
 
+void TestClass::SetInt(int I) {
+	this->I = I;
+}
+
+int TestClass::GetInt() {
+	return this->I;
+}
+
+void TestClass::PrintInt() {
+	printf("Int: %i\n", this->I);
+}
+
+// ----
+
 const char* GetSomeString() {
 	return SomeString;
 }

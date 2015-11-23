@@ -7,6 +7,26 @@ using System.Runtime.InteropServices;
 
 namespace Pinevoke {
 	static class Types {
+		static Dictionary<string, string> TypeConversion;
+
+		static Types() {
+			TypeConversion = new Dictionary<string, string>() {
+				{"unsigned char", "byte"},
+				{"short", "short"},
+				{"unsigned short", "ushort"},
+				{"int", "int"},
+				{"unsigned int", "uint"},
+				{"long", "int"},
+				{"unsigned long", "uint"},
+				{"char", "char"},
+				{"wchar_t", "char"},
+				{"char *", "string"},
+				{"wchar_t *", "string"},
+				{"float", "float"},
+				{"double", "double"}
+			};
+		}
+
 		public static string ReadType(string Type, string InternalName) {
 			if (Type == "string")
 				return "return Marshal.PtrToStringAnsi(Marshal.ReadIntPtr(" + InternalName + "));";
@@ -24,16 +44,10 @@ namespace Pinevoke {
 			if (CppType == "void" || CppType.Length == 0)
 				return "void";
 
-			if (CppType == "char *")
-				return "string";
+			if (TypeConversion.ContainsKey(CppType))
+				return TypeConversion[CppType];
 			if (CppType.Contains('*'))
 				return "IntPtr";
-
-			if (CppType == "unsigned int")
-				return "uint";
-
-			if (CppType == "int")
-				return CppType;
 			throw new Exception("Unknown type " + CppType);
 		}
 
