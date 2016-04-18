@@ -26,11 +26,9 @@ namespace Pinevoke {
 			if (Args.Length == 1 && File.Exists(Args[0]))
 				Generate(Args[0]);
 			else
-				Console.WriteLine("Usage:\n\tpinevoke.exe some.dll");
+				Console.WriteLine("Usage:\n\tpinevoke library.dll");
 
-			Console.WriteLine("Done!");
 			Dbghelp.SymCleanup(CurProcess);
-			Console.ReadLine();
 		}
 
 		static bool EnumSymbols(ref SYMBOL_INFO Symbol, uint Size, IntPtr Userdata) {
@@ -51,12 +49,10 @@ namespace Pinevoke {
 
 			string PdbPath = Path.GetFileNameWithoutExtension(Dll) + ".pdb";
 			if (File.Exists(PdbPath))
-				//throw new Exception(PdbPath + " found, remove it");
-				File.Delete(PdbPath);
+				throw new Exception(PdbPath + " found, remove it");
 
 			ulong DllBase = Dbghelp.SymLoadModuleEx(CurProcess, IntPtr.Zero, Dll, null, 0, 0, IntPtr.Zero, 0);
 			if (DllBase == 0)
-				//throw new Exception("Failed to load module " + Dll);
 				throw new Win32Exception();
 
 			ExportedSymbols.Clear();
@@ -70,13 +66,10 @@ namespace Pinevoke {
 
 		static void Generate(string DllPath) {
 			string[] Exports = GetExports(DllPath);
-			Console.WriteLine();
 
-			Generator Gen = new Generator(DllPath, CharSet.Ansi);
-			Parser P = new Parser();
-			for (int i = 0; i < Exports.Length; i++)
-				P.Parse(Exports[i], Demangle(Exports[i]), Gen);
-			File.WriteAllText("Test.cs", Gen.Finalize());
+			for (int i = 0; i < Exports.Length; i++) {
+				Console.WriteLine("{0} = {1} = '{2}'", i, Exports[i], Demangle(Exports[i]));
+			}
 		}
 	}
 }

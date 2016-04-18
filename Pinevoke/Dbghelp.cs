@@ -29,24 +29,25 @@ namespace Pinevoke {
 
 	static class Dbghelp {
 		const string DllName = "dbghelp";
+		const CharSet CSet = CharSet.Ansi;
 
-		[DllImport(DllName, SetLastError = true, CharSet = CharSet.Ansi)]
+		[DllImport(DllName, SetLastError = true, CharSet = CSet)]
 		public static extern uint SymSetOptions(uint Flags);
 
-		[DllImport(DllName, SetLastError = true, CharSet = CharSet.Ansi)]
+		[DllImport(DllName, SetLastError = true, CharSet = CSet)]
 		public static extern bool SymInitialize(IntPtr hProcess, string UserSearchPath = null, bool fInvadeProcess = false);
 
-		[DllImport(DllName, SetLastError = true, CharSet = CharSet.Ansi)]
+		[DllImport(DllName, SetLastError = true, CharSet = CSet)]
 		public static extern bool SymCleanup(IntPtr hProcess);
 
-		[DllImport(DllName, SetLastError = true, CharSet = CharSet.Ansi)]
+		[DllImport(DllName, SetLastError = true, CharSet = CSet)]
 		public static extern ulong SymLoadModuleEx(IntPtr Proc, IntPtr File, string ImgName, string ModName, long Base,
 			int DllSize, IntPtr Data, int Flags);
 
-		[DllImport(DllName, SetLastError = true, CharSet = CharSet.Ansi)]
+		[DllImport(DllName, SetLastError = true, CharSet = CSet)]
 		public static extern bool SymEnumSymbols(IntPtr Proc, ulong BaseOfDll, string Mask, EnumSymbolsProc Callback, IntPtr Userdata);
 
-		[DllImport(DllName, SetLastError = true, CharSet = CharSet.Ansi)]
+		[DllImport(DllName, SetLastError = true, CharSet = CSet)]
 		public static extern int UnDecorateSymbolName(string DecoratedName, StringBuilder UnDecoratedName,
 			int UndecoratedLength, int Flags);
 
