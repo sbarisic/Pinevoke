@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 
 namespace Pinevoke {
 	unsafe class Program {
-		static IntPtr CurProcess;
+		public static IntPtr CurProcess;
 		static List<string> ExportedSymbols;
 
 		[STAThread]
@@ -19,57 +19,28 @@ namespace Pinevoke {
 			CurProcess = Process.GetCurrentProcess().Handle;
 			ExportedSymbols = new List<string>();
 
+			if (Args.Length != 1 || !File.Exists(Args[0])) {
+				Console.WriteLine("Usage:\n\tpinevoke library.dll");
+				return;
+			}
+
 			if (!Dbghelp.SymInitialize(CurProcess))
 				throw new Exception("Failed to SymInitialize");
+
 			Dbghelp.SymSetOptions(0x4000); // Publics only
-
-			if (Args.Length == 1 && File.Exists(Args[0]))
-				Generate(Args[0]);
-			else
-				Console.WriteLine("Usage:\n\tpinevoke library.dll");
-
+			Generate(Args[0]);
 			Dbghelp.SymCleanup(CurProcess);
-		}
 
-		static bool EnumSymbols(ref SYMBOL_INFO Symbol, uint Size, IntPtr Userdata) {
-			string Name;
-			fixed (byte* NamePtr = Symbol.Name)
-				Name = Marshal.PtrToStringAnsi(new IntPtr(NamePtr));
-
-			if ((Symbol.Flags & 0x200) != 0)
-				ExportedSymbols.Add(Name);
-			return true;
-		}
-
-		static string[] GetExports(string Dll) {
-			Console.WriteLine("Enumerating exports for " + Dll);
-
-			if (!File.Exists(Dll))
-				throw new FileNotFoundException("File not found", Dll);
-
-			string PdbPath = Path.GetFileNameWithoutExtension(Dll) + ".pdb";
-			if (File.Exists(PdbPath))
-				throw new Exception(PdbPath + " found, remove it");
-
-			ulong DllBase = Dbghelp.SymLoadModuleEx(CurProcess, IntPtr.Zero, Dll, null, 0, 0, IntPtr.Zero, 0);
-			if (DllBase == 0)
-				throw new Win32Exception();
-
-			ExportedSymbols.Clear();
-			Dbghelp.SymEnumSymbols(CurProcess, DllBase, null, EnumSymbols, IntPtr.Zero);
-			return ExportedSymbols.ToArray();
-		}
-
-		static string Demangle(string Name) {
-			return Dbghelp.UnDecorateSymbolName(Name);
+			if (Debugger.IsAttached)
+				Console.ReadLine();
 		}
 
 		static void Generate(string DllPath) {
-			string[] Exports = GetExports(DllPath);
+			string[] ExportStrings = CppHelper.GetExports(DllPath);
+			SymbolPrototype[] Exports = ExportStrings.Select((S) => new SymbolPrototype(S)).ToArray();
 
-			for (int i = 0; i < Exports.Length; i++) {
-				Console.WriteLine("{0} = {1} = '{2}'", i, Exports[i], Demangle(Exports[i]));
-			}
+			for (int i = 0; i < Exports.Length; i++)
+				Console.WriteLine(Exports[i]);
 		}
 	}
 }
