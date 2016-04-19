@@ -10,63 +10,71 @@ using System.ComponentModel;
 
 namespace Pinevoke {
 	class CppType {
+		static Dictionary<string, Tuple<string, string>> PrimitiveTypes = new Dictionary<string, Tuple<string, string>>() {
+			{ "void", new Tuple<string,string>("Void", "Void") },
+			{ "char", new Tuple<string,string>("Char", "Byte") },
+			{ "bool", new Tuple<string,string>("Boolean", "Boolean") },
+			{ "short", new Tuple<string,string>("Int16", "UInt16") },
+			{ "int", new Tuple<string,string>("Int32", "UInt32") },
+			{ "long", new Tuple<string,string>("Int32", "UInt32") },
+			{ "long long", new Tuple<string,string>("Int64", "UInt64") },
+			{ "__int64", new Tuple<string,string>("Int64", "UInt64") },
+			{ "wchar_t", new Tuple<string,string>("Char", "UInt16") },
+			{ "float", new Tuple<string,string>("Single", "Single") },
+			{ "double", new Tuple<string,string>("Double", "Double") },
+			{ "long double", new Tuple<string,string>("Double", "Double") },
+		};
+
 		public string TypeString;
-		public bool Unsigned;
 		public int Pointer;
 		public bool PrimitiveType;
+		public UnmanagedType? MarshalAsUnmanagedType;
 
 		public CppType(bool Unsigned, int Pointer, string TypeString) {
-			TypeString = NormalizeTypeName(TypeString, out PrimitiveType);
+			PrimitiveType = false;
+			MarshalAsUnmanagedType = null;
 
-			if (TypeString == "char" && Unsigned) {
-				Unsigned = false;
-				TypeString = "byte";
+			if (PrimitiveTypes.ContainsKey(TypeString)) {
+				PrimitiveType = true;
+
+				if (!Unsigned) {
+					if (TypeString == "wchar_t") {
+						if (Pointer > 0) {
+							MarshalAsUnmanagedType = UnmanagedType.LPWStr;
+						} else {
+							MarshalAsUnmanagedType = UnmanagedType.I2;
+						}
+					} else if (TypeString == "char") {
+						if (Pointer > 0) {
+							MarshalAsUnmanagedType = UnmanagedType.LPStr;
+						} else {
+							MarshalAsUnmanagedType = UnmanagedType.I1;
+						}
+					}
+				}
+
+				Tuple<string, string> TS = PrimitiveTypes[TypeString];
+				if (Unsigned)
+					TypeString = TS.Item2;
+				else
+					TypeString = TS.Item1;
 			}
-			
-			this.Unsigned = Unsigned;
+
+			TypeString = TypeString.Replace("::", ".");
+
 			this.Pointer = Pointer;
 			this.TypeString = TypeString;
 		}
 
 		public override string ToString() {
 			string Name = "";
+			if (MarshalAsUnmanagedType != null)
+				Name += "[" + MarshalAsUnmanagedType + "] ";
 
-			if (Unsigned)
-				Name += "unsigned ";
 			Name += TypeString;
-
 			if (Pointer > 0)
 				Name += " " + new string('*', Pointer);
-
 			return Name;
-		}
-
-		static CSharpCodeProvider Compiler = new CSharpCodeProvider();
-		static string NormalizeTypeName(string TypeName, out bool PrimitiveType) {
-			if (TypeName == "short")
-				TypeName = "Int16";
-			else if (TypeName == "long")
-				TypeName = "Int64";
-			else if (TypeName == "int")
-				TypeName = "Int32";
-			else if (TypeName == "byte")
-				TypeName = "Byte";
-
-			try {
-				// HAAAAAAAAAAAAAX
-				int StartIdx = 0;
-				if (TypeName.StartsWith("__"))
-					StartIdx += 2;
-
-				string TN = char.ToUpper(TypeName[StartIdx]) + TypeName.Substring(StartIdx + 1);
-				string Ret = Compiler.GetTypeOutput(new CodeTypeReference(Type.GetType("System." + TN)));
-				PrimitiveType = true;
-				return Ret;
-			} catch (Exception) {
-			}
-
-			PrimitiveType = false;
-			return TypeName;
 		}
 
 		public static CppType ParseType(string[] Tokens, int StartIdx) {
@@ -86,7 +94,15 @@ namespace Pinevoke {
 				StartIdx++;
 			}
 
-			TypeName = Tokens[StartIdx];
+			if (Tokens[StartIdx] == "long") {
+				string Tok2 = Tokens[StartIdx + 1];
+				if (!(Tok2 == "," || Tok2 == ")")) {
+					StartIdx++;
+					TypeName += "long ";
+				}
+			}
+
+			TypeName += Tokens[StartIdx];
 			string T = "";
 			while ((T = Tokens[++StartIdx]).Length > 0 && (T == "*" || T == "&"))
 				Pointer++;
@@ -111,14 +127,19 @@ namespace Pinevoke {
 
 		public SymbolPrototype(string MangledName) {
 			Demangled = CppHelper.Demangle(MangledName);
+			if (Demangled == MangledName)
+				throw new Exception("Could not demangle " + MangledName);
 
 			string[] Tokens = Tokenizer.Tokenize(Demangled);
 			Scope = SplitByScope(ParseName(Tokens));
 			Name = Scope.LastOrDefault();
+			Scope = Scope.Sub(Scope.Length - 1);
 			CallingConvention = GetCallingConvention();
 
-			if (Scope.Length > 1)
-				ClassName = Scope[Scope.Length - 2];
+			if (Scope.Length > 0 && CallingConvention == CallingConvention.ThisCall)
+				ClassName = Scope[Scope.Length - 1];
+			else
+				ClassName = null;
 
 			if (Demangled.Contains("operator"))
 				SymbolType = SymbolType.Operator;

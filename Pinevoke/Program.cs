@@ -37,10 +37,22 @@ namespace Pinevoke {
 
 		static void Generate(string DllPath) {
 			string[] ExportStrings = CppHelper.GetExports(DllPath);
-			SymbolPrototype[] Exports = ExportStrings.Select((S) => new SymbolPrototype(S)).ToArray();
 
-			for (int i = 0; i < Exports.Length; i++)
-				Console.WriteLine(Exports[i]);
+			List<SymbolPrototype> ExportList = new List<SymbolPrototype>();
+			foreach (var E in ExportStrings) {
+				try {
+					ExportList.Add(new SymbolPrototype(E));
+				} catch (Exception) {
+				}
+			}
+
+			foreach (var Export in ExportList) 
+				Console.WriteLine(Export);
+
+			CodeGenerator Gen = new CodeGenerator(ExportList, Path.GetFileNameWithoutExtension(DllPath));
+			if (File.Exists("Test.cs"))
+				File.Delete("Test.cs");
+			File.WriteAllText("Test.cs", Gen.Generate());
 		}
 	}
 }
